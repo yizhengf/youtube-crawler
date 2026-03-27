@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import {
+  createAiVideoJobFromVideo,
   createStoryJobFromVideo,
   getAnalysisOverview,
   getAnalysisStatus,
@@ -49,6 +50,7 @@ export default function AnalysisPage() {
   const [overview, setOverview] = useState<AnalysisOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [creatingVideoId, setCreatingVideoId] = useState<number | null>(null);
+  const [creatingAiVideoId, setCreatingAiVideoId] = useState<number | null>(null);
 
   const loadOverview = useCallback(async (channelId?: string) => {
     setLoading(true);
@@ -97,6 +99,20 @@ export default function AnalysisPage() {
       showToast("error", `建立任務失敗：${error instanceof Error ? error.message : "未知錯誤"}`);
     } finally {
       setCreatingVideoId(null);
+    }
+  };
+
+  const handleCreateAiJob = async (videoId: number) => {
+    setCreatingAiVideoId(videoId);
+    try {
+      const job = await createAiVideoJobFromVideo(videoId);
+      await runJob(job.id);
+      showToast("success", "已建立並開始執行 AI 影片生成任務");
+      router.push(`/jobs/${job.id}`);
+    } catch (error: unknown) {
+      showToast("error", `建立任務失敗：${error instanceof Error ? error.message : "未知錯誤"}`);
+    } finally {
+      setCreatingAiVideoId(null);
     }
   };
 
@@ -178,13 +194,20 @@ export default function AnalysisPage() {
                     <div className="mt-2 text-xs text-gray-500">
                       觀看數：{video.view_count?.toLocaleString() || "-"} ・ 按讚數：{video.like_count?.toLocaleString() || "-"}
                     </div>
-                    <div className="mt-3">
+                    <div className="mt-3 flex flex-wrap gap-2">
                       <button
                         onClick={() => handleCreateStoryJob(video.id)}
                         disabled={creatingVideoId === video.id}
                         className="rounded-lg bg-blue-600 px-3 py-2 text-xs font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {creatingVideoId === video.id ? "建立中..." : "一鍵建立仿寫任務"}
+                      </button>
+                      <button
+                        onClick={() => handleCreateAiJob(video.id)}
+                        disabled={creatingAiVideoId === video.id}
+                        className="rounded-lg border border-purple-300 bg-purple-50 px-3 py-2 text-xs font-medium text-purple-700 transition hover:bg-purple-100 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {creatingAiVideoId === video.id ? "建立中..." : "一鍵建立 AI 影片任務"}
                       </button>
                     </div>
                   </div>
