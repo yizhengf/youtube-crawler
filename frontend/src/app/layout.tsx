@@ -3,8 +3,8 @@ import "./globals.css";
 import ClientProviders from "./providers";
 
 export const metadata: Metadata = {
-  title: "YouTube 爆款影片分析工具",
-  description: "YouTube 頻道影片爬蟲與分析管理後台",
+  title: "AI 影片工廠 MVP",
+  description: "YouTube 頻道研究、影片資料庫、任務中心與設定管理",
 };
 
 export default function RootLayout({

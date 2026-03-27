@@ -9,6 +9,8 @@ interface VideoTableProps {
   sortOrder: "asc" | "desc";
   onSort: (field: string) => void;
   showChannel?: boolean;
+  onCreateStoryJob?: (video: Video) => void;
+  onCreateAiJob?: (video: Video) => void;
 }
 
 function formatNumber(n: number | null | undefined): string {
@@ -36,6 +38,8 @@ export default function VideoTable({
   sortOrder,
   onSort,
   showChannel,
+  onCreateStoryJob,
+  onCreateAiJob,
 }: VideoTableProps) {
   if (loading) {
     return (
@@ -86,6 +90,9 @@ export default function VideoTable({
               </th>
             ))}
             <th className="px-4 py-3 font-medium">狀態</th>
+            {(onCreateStoryJob || onCreateAiJob) && (
+              <th className="px-4 py-3 font-medium">任務</th>
+            )}
           </tr>
         </thead>
         <tbody>
@@ -143,7 +150,7 @@ export default function VideoTable({
               <td className="px-4 py-2">
                 <span
                   className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-                    v.status === "完成"
+                    v.status === "完成" || v.status === "爬蟲完成"
                       ? "bg-green-100 text-green-800"
                       : "bg-gray-200 text-gray-700"
                   }`}
@@ -151,6 +158,28 @@ export default function VideoTable({
                   {v.status}
                 </span>
               </td>
+              {(onCreateStoryJob || onCreateAiJob) && (
+                <td className="px-4 py-2">
+                  <div className="flex items-center gap-2">
+                    {onCreateStoryJob && (
+                      <button
+                        onClick={() => onCreateStoryJob(v)}
+                        className="px-2 py-1 text-xs bg-blue-50 text-blue-700 rounded hover:bg-blue-100 transition-colors"
+                      >
+                        仿寫任務
+                      </button>
+                    )}
+                    {onCreateAiJob && (
+                      <button
+                        onClick={() => onCreateAiJob(v)}
+                        className="px-2 py-1 text-xs bg-purple-50 text-purple-700 rounded hover:bg-purple-100 transition-colors"
+                      >
+                        AI 生成
+                      </button>
+                    )}
+                  </div>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>

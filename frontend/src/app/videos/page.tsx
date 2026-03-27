@@ -1,18 +1,30 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { getVideos, getChannels, syncVideosToNotion } from "@/lib/api";
-import { Video, Channel } from "@/lib/types";
+import {
+  createAiVideoJobFromVideo,
+  createStoryJobFromVideo,
+  getVideoStats,
+  getVideos,
+  getChannels,
+  runJob,
+  syncVideosToNotion,
+} from "@/lib/api";
+import { Video, Channel, VideoStats } from "@/lib/types";
 import VideoTable from "@/components/VideoTable";
 import Pagination from "@/components/Pagination";
-import TaskProgress from "@/components/TaskProgress";
+import TaskProgress, { useTaskStatus } from "@/components/TaskProgress";
 import { useToast } from "@/components/Toast";
+import { useRouter } from "next/navigation";
 
 export default function AllVideosPage() {
+  const router = useRouter();
   const { showToast } = useToast();
+  const { isActive } = useTaskStatus();
 
   const [videos, setVideos] = useState<Video[]>([]);
   const [channels, setChannels] = useState<Channel[]>([]);
+  const [stats, setStats] = useState<VideoStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -30,6 +42,15 @@ export default function AllVideosPage() {
       setChannels(data);
     } catch {
       // ignore
+    }
+  }, []);
+
+  const fetchStats = useCallback(async () => {
+    try {
+      const data = await getVideoStats();
+      setStats(data);
+    } catch {
+      setStats(null);
     }
   }, []);
 
@@ -55,11 +76,21 @@ export default function AllVideosPage() {
 
   useEffect(() => {
     fetchChannels();
-  }, [fetchChannels]);
+    fetchStats();
+  }, [fetchChannels, fetchStats]);
 
   useEffect(() => {
     fetchVideos();
   }, [fetchVideos]);
+
+  useEffect(() => {
+    if (!isActive) return;
+    const interval = setInterval(() => {
+      fetchVideos();
+      fetchStats();
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [fetchStats, fetchVideos, isActive]);
 
   const handleSort = (field: string) => {
     if (sortBy === field) {
@@ -86,10 +117,37 @@ export default function AllVideosPage() {
     }
   };
 
+  const handleCreateStoryJob = async (video: Video) => {
+    try {
+      const job = await createStoryJobFromVideo(video.id);
+      await runJob(job.id);
+      showToast("success", "已建立並開始執行仿寫故事影片任務");
+      router.push(`/jobs/${job.id}`);
+    } catch (e: unknown) {
+      showToast("error", `建立任務失敗：${e instanceof Error ? e.message : "未知錯誤"}`);
+    }
+  };
+
+  const handleCreateAiJob = async (video: Video) => {
+    try {
+      const job = await createAiVideoJobFromVideo(video.id);
+      await runJob(job.id);
+      showToast("success", "已建立並開始執行 AI 影片生成任務");
+      router.push(`/jobs/${job.id}`);
+    } catch (e: unknown) {
+      showToast("error", `建立任務失敗：${e instanceof Error ? e.message : "未知錯誤"}`);
+    }
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">所有影片</h1>
+        <div>
+          <h1 className="text-2xl font-bold">影片資料庫</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            先挑研究樣本，再從影片直接建立仿寫或 AI 生成任務。
+          </p>
+        </div>
         <button
           onClick={handleSyncNotion}
           className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
@@ -99,6 +157,29 @@ export default function AllVideosPage() {
       </div>
 
       <TaskProgress />
+
+      <div className="mb-6 grid gap-4 md:grid-cols-4">
+        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="text-sm text-gray-500">影片總數</div>
+          <div className="mt-2 text-2xl font-bold text-gray-900">{stats?.total_videos ?? videos.length}</div>
+        </div>
+        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="text-sm text-gray-500">已完成爬蟲</div>
+          <div className="mt-2 text-2xl font-bold text-green-700">{stats?.total_crawled ?? 0}</div>
+        </div>
+        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="text-sm text-gray-500">平均觀看數</div>
+          <div className="mt-2 text-2xl font-bold text-blue-700">
+            {stats?.avg_view_count != null ? Math.round(stats.avg_view_count).toLocaleString() : "-"}
+          </div>
+        </div>
+        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="text-sm text-gray-500">平均按讚數</div>
+          <div className="mt-2 text-2xl font-bold text-purple-700">
+            {stats?.avg_like_count != null ? Math.round(stats.avg_like_count).toLocaleString() : "-"}
+          </div>
+        </div>
+      </div>
 
       <div className="flex items-center gap-3 mb-4">
         <form onSubmit={handleSearch} className="flex items-center gap-2">
@@ -142,6 +223,8 @@ export default function AllVideosPage() {
           sortOrder={sortOrder}
           onSort={handleSort}
           showChannel
+          onCreateStoryJob={handleCreateStoryJob}
+          onCreateAiJob={handleCreateAiJob}
         />
       </div>
 

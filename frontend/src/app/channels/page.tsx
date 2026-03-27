@@ -111,6 +111,11 @@ export default function ChannelsPage() {
     }
   };
 
+  const totalChannels = channels.length;
+  const resolvedChannels = channels.filter((channel) => Boolean(channel.channel_id)).length;
+  const completedChannels = channels.filter((channel) => channel.status === "爬蟲完成").length;
+  const totalVideos = channels.reduce((sum, channel) => sum + (channel.video_count || 0), 0);
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -132,6 +137,25 @@ export default function ChannelsPage() {
       </div>
 
       <TaskProgress />
+
+      <div className="mb-6 grid gap-4 md:grid-cols-4">
+        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="text-sm text-gray-500">頻道總數</div>
+          <div className="mt-2 text-2xl font-bold text-gray-900">{totalChannels}</div>
+        </div>
+        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="text-sm text-gray-500">已解析頻道 ID</div>
+          <div className="mt-2 text-2xl font-bold text-blue-700">{resolvedChannels}</div>
+        </div>
+        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="text-sm text-gray-500">爬蟲完成</div>
+          <div className="mt-2 text-2xl font-bold text-green-700">{completedChannels}</div>
+        </div>
+        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="text-sm text-gray-500">累計影片數</div>
+          <div className="mt-2 text-2xl font-bold text-purple-700">{totalVideos.toLocaleString()}</div>
+        </div>
+      </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
         <ChannelTable

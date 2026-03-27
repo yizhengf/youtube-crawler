@@ -13,6 +13,12 @@ SETTING_KEYS = [
     "notion_token",
     "notion_channels_db_id",
     "notion_videos_db_id",
+    "openai_api_key",
+    "deepseek_api_key",
+    "fal_api_key",
+    "sora_api_key",
+    "hailuo_api_key",
+    "grok_api_key",
 ]
 
 

@@ -1,13 +1,19 @@
 import math
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, desc, asc
 from sqlalchemy.orm import Session
 
 from database import get_db
-from models import Video
-from schemas import VideoResponse, VideoPaginatedResponse, VideoStatsResponse
+from models import Channel, Job, Video
+from schemas import (
+    JobResponse,
+    VideoDetailResponse,
+    VideoPaginatedResponse,
+    VideoResponse,
+    VideoStatsResponse,
+)
 
 router = APIRouter(prefix="/api/videos", tags=["videos"])
 
@@ -86,3 +92,68 @@ def video_stats(
         avg_like_count=round(row[1], 2) if row[1] else None,
         avg_comment_count=round(row[2], 2) if row[2] else None,
     )
+
+
+@router.get("/{video_db_id}", response_model=VideoDetailResponse)
+def get_video(video_db_id: int, db: Session = Depends(get_db)):
+    video = db.query(Video).filter(Video.id == video_db_id).first()
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+
+    channel = None
+    if video.channel_id:
+        channel = db.query(Channel).filter(Channel.channel_id == video.channel_id).first()
+
+    payload = VideoResponse.model_validate(video).model_dump()
+    payload["channel_handle"] = channel.handle if channel else None
+    return VideoDetailResponse(**payload)
+
+
+@router.post("/{video_db_id}/create-story-job", response_model=JobResponse, status_code=201)
+def create_story_job_from_video(video_db_id: int, db: Session = Depends(get_db)):
+    video = db.query(Video).filter(Video.id == video_db_id).first()
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+
+    job = Job(
+        job_type="story_rewrite",
+        title=video.title or f"影片 {video.video_id} 仿寫任務",
+        source_video_id=video.id,
+        input_mode="source_video",
+        topic=video.title,
+        description=video.description,
+        language="繁體中文",
+        tone="懸疑、快節奏、口語化",
+        target_duration=45,
+        status="draft",
+        review_status="pending",
+        current_step="等待執行",
+    )
+    db.add(job)
+    db.commit()
+    db.refresh(job)
+    return JobResponse.model_validate(job)
+
+
+@router.post("/{video_db_id}/create-ai-video-job", response_model=JobResponse, status_code=201)
+def create_ai_video_job_from_video(video_db_id: int, db: Session = Depends(get_db)):
+    video = db.query(Video).filter(Video.id == video_db_id).first()
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+
+    job = Job(
+        job_type="ai_video_generation",
+        title=f"{video.title or video.video_id}｜AI 影片生成",
+        source_video_id=video.id,
+        input_mode="source_video",
+        prompt=video.title or video.description,
+        provider="sora",
+        aspect_ratio="9:16",
+        status="draft",
+        review_status="not_required",
+        current_step="等待執行",
+    )
+    db.add(job)
+    db.commit()
+    db.refresh(job)
+    return JobResponse.model_validate(job)

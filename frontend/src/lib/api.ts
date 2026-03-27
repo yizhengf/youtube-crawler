@@ -1,5 +1,9 @@
 import {
+  AnalysisStatus,
   Channel,
+  Job,
+  JobCreateInput,
+  JobDetail,
   Video,
   Settings,
   TaskItem,
@@ -123,4 +127,49 @@ export async function syncVideosToNotion(): Promise<{ message: string }> {
   return request<{ message: string }>("/api/notion/sync-videos", {
     method: "POST",
   });
+}
+
+// Jobs
+export async function getJobs(): Promise<Job[]> {
+  return request<Job[]>("/api/jobs");
+}
+
+export async function getJob(id: number): Promise<JobDetail> {
+  return request<JobDetail>(`/api/jobs/${id}`);
+}
+
+export async function createJob(data: JobCreateInput): Promise<Job> {
+  return request<Job>("/api/jobs", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function runJob(id: number): Promise<{ job_id: number; task_id?: string; message: string }> {
+  return request(`/api/jobs/${id}/run`, { method: "POST" });
+}
+
+export async function retryJob(id: number): Promise<{ job_id: number; task_id?: string; message: string }> {
+  return request(`/api/jobs/${id}/retry`, { method: "POST" });
+}
+
+export async function approveJob(id: number): Promise<{ job_id: number; message: string }> {
+  return request(`/api/jobs/${id}/approve`, { method: "POST" });
+}
+
+export async function rejectJob(id: number): Promise<{ job_id: number; message: string }> {
+  return request(`/api/jobs/${id}/reject`, { method: "POST" });
+}
+
+export async function createStoryJobFromVideo(id: number): Promise<Job> {
+  return request<Job>(`/api/videos/${id}/create-story-job`, { method: "POST" });
+}
+
+export async function createAiVideoJobFromVideo(id: number): Promise<Job> {
+  return request<Job>(`/api/videos/${id}/create-ai-video-job`, { method: "POST" });
+}
+
+// Analysis placeholder
+export async function getAnalysisStatus(): Promise<AnalysisStatus> {
+  return request<AnalysisStatus>("/api/analysis/status");
 }

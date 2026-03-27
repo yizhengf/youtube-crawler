@@ -1,6 +1,16 @@
-# YouTube 爆款影片分析工具
+# YouTube 爆款影片與 AI 影片工廠 MVP
 
-一套用來取代 n8n 工作流程的 YouTube 頻道影片爬取與分析工具。透過網頁介面即可輕鬆管理頻道、爬取影片資料、檢視統計數據，並將資料同步至 Notion 資料庫。
+一套從 n8n workflow 轉成本地 Web App 的 MVP。  
+目前已整合：
+
+- YouTube 頻道與影片爬蟲
+- Notion 同步
+- 任務中心
+- 仿寫故事影片腳本生成
+- fal.ai / OpenAI / placeholder TTS
+- 本地 FFmpeg 成片
+
+透過網頁介面即可管理頻道、影片、設定與內容任務，先完成「研究爆款 -> 建立任務 -> 產出本地影片」這條低成本流程。
 
 ## 專案結構
 
@@ -13,15 +23,20 @@ project/
 │   ├── schemas.py       # Pydantic schemas
 │   ├── requirements.txt # Python 依賴套件
 │   ├── routers/         # API 路由
-│   │   ├── channels.py  # 頻道管理
-│   │   ├── videos.py    # 影片資料
-│   │   ├── crawl.py     # 爬取功能
-│   │   ├── settings.py  # 設定管理
-│   │   └── notion_sync.py # Notion 同步
+│   │   ├── channels.py / crawl.py
+│   │   ├── videos.py
+│   │   ├── jobs.py
+│   │   ├── analysis.py
+│   │   ├── settings.py
+│   │   └── notion_sync.py
 │   └── services/        # 商業邏輯
-│       ├── youtube.py   # YouTube API 服務
-│       ├── notion.py    # Notion API 服務
-│       └── task_manager.py # 背景任務管理
+│       ├── youtube.py
+│       ├── notion.py
+│       ├── job_runner.py
+│       ├── story_video_pipeline.py
+│       ├── tts_service.py
+│       ├── render_service.py
+│       └── task_manager.py
 ├── frontend/            # Next.js 前端
 │   ├── src/
 │   │   ├── app/         # 頁面路由
@@ -87,6 +102,14 @@ npm run dev
 
 前端預設執行於 `http://localhost:3000`。
 
+## 主要頁面
+
+- `/channels`：頻道管理
+- `/videos`：影片資料庫
+- `/jobs`：任務中心
+- `/settings`：設定
+- `/analysis`：AI 分析預留頁（目前僅 placeholder）
+
 ## 環境變數
 
 ### 後端
@@ -97,6 +120,8 @@ npm run dev
 | `NOTION_TOKEN` | Notion Integration Token |
 | `NOTION_CHANNELS_DB_ID` | Notion 頻道資料庫 ID |
 | `NOTION_VIDEOS_DB_ID` | Notion 影片資料庫 ID |
+| `OPENAI_API_KEY` | OpenAI API Key（可選，TTS fallback） |
+| `FAL_API_KEY` | fal.ai API Key（目前 TTS 優先） |
 
 > 以上變數也可透過網頁應用程式的「設定」頁面進行設定，設定值會儲存於 SQLite 資料庫中。
 
@@ -122,17 +147,64 @@ npm run dev
 - Render
 - Fly.io
 
-## 功能列表（MVP）
+## 功能列表（目前版本）
 
-- 新增 YouTube 頻道，自動解析 Channel ID
-- 爬取頻道所有影片（支援完整分頁）
-- 爬取影片統計數據（觀看次數、按讚數、留言數、標籤、影片長度）
-- 一鍵執行完整爬取流程
-- 影片排序、搜尋與篩選
-- 將資料同步至 Notion 資料庫
-- 背景任務進度追蹤
+### 1. 頻道管理
+
+- 新增 YouTube 頻道
+- 自動解析 Channel ID / Handle
+- 爬取頻道影片
+- 補抓影片統計
+- 同步頻道資料到 Notion
+
+### 2. 影片資料庫
+
+- 顯示影片列表
+- 搜尋、排序、篩選
+- 從影片直接建立任務
+- 同步影片資料到 Notion
+
+### 3. 任務中心
+
+- 支援兩種任務：
+  - `仿寫故事影片`
+  - `AI 影片生成（目前為占位任務）`
+- 任務列表 / 任務詳情
+- 背景執行狀態
+- 審核、重跑
+- 腳本、分鏡、prompt bundle 顯示
+
+### 4. 低成本本地成片流程
+
+- `仿寫故事影片` 會自動產生：
+  - 標題
+  - 大綱
+  - narration
+  - storyboard
+  - prompt bundle
+- TTS 優先順序：
+  - `fal.ai`
+  - `OpenAI`
+  - `placeholder`
+- 本地 FFmpeg 會輸出：
+  - 音檔
+  - 最終 `mp4`
+
+### 5. 設定管理
+
+- YouTube API
+- Notion token / database ids
+- OpenAI API Key
+- fal.ai API Key
+- 其他 AI provider 欄位預留：
+  - DeepSeek
+  - Sora
+  - 海螺
+  - Grok
 
 ## 未來規劃
 
-- AI 影片內容分析
-- 影片翻拍腳本自動生成
+- AI 爆款影片分析
+- 對標頻道分析
+- 真實 AI 影片生成 provider
+- YouTube 自動發布
