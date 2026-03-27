@@ -183,3 +183,53 @@ export interface AnalysisStatus {
   status: string;
   message: string;
 }
+
+export interface AnalysisKeywordItem {
+  keyword: string;
+  count: number;
+}
+
+export interface AnalysisTopVideoItem {
+  id: number;
+  video_id: string;
+  title: string | null;
+  url: string | null;
+  view_count: number | null;
+  like_count: number | null;
+  published_at: string | null;
+  channel_id: string;
+}
+
+export interface AnalysisChannelSummary {
+  id: number;
+  handle: string | null;
+  url: string;
+  channel_id: string | null;
+  video_count: number;
+  avg_view_count: number | null;
+  avg_like_count: number | null;
+  top_video_title: string | null;
+  top_video_views: number | null;
+}
+
+export interface AnalysisTitlePattern {
+  avg_title_length: number;
+  question_title_ratio: number;
+  digit_title_ratio: number;
+  top_keywords: AnalysisKeywordItem[];
+}
+
+export interface AnalysisOverview {
+  status: string;
+  selected_channel_id: string | null;
+  total_channels: number;
+  total_videos: number;
+  avg_view_count: number | null;
+  avg_like_count: number | null;
+  top_video_title: string | null;
+  top_video_views: number | null;
+  top_channels: AnalysisChannelSummary[];
+  top_videos: AnalysisTopVideoItem[];
+  title_patterns: AnalysisTitlePattern;
+  recommendations: string[];
+}

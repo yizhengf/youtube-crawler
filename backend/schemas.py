@@ -243,3 +243,53 @@ class JobDetailResponse(JobResponse):
 class AnalysisStatusResponse(BaseModel):
     status: str
     message: str
+
+
+class AnalysisKeywordItem(BaseModel):
+    keyword: str
+    count: int
+
+
+class AnalysisTopVideoItem(BaseModel):
+    id: int
+    video_id: str
+    title: Optional[str] = None
+    url: Optional[str] = None
+    view_count: Optional[int] = None
+    like_count: Optional[int] = None
+    published_at: Optional[datetime] = None
+    channel_id: str
+
+
+class AnalysisChannelSummary(BaseModel):
+    id: int
+    handle: Optional[str] = None
+    url: str
+    channel_id: Optional[str] = None
+    video_count: int
+    avg_view_count: Optional[float] = None
+    avg_like_count: Optional[float] = None
+    top_video_title: Optional[str] = None
+    top_video_views: Optional[int] = None
+
+
+class AnalysisTitlePatternResponse(BaseModel):
+    avg_title_length: float
+    question_title_ratio: float
+    digit_title_ratio: float
+    top_keywords: List[AnalysisKeywordItem] = []
+
+
+class AnalysisOverviewResponse(BaseModel):
+    status: str
+    selected_channel_id: Optional[str] = None
+    total_channels: int
+    total_videos: int
+    avg_view_count: Optional[float] = None
+    avg_like_count: Optional[float] = None
+    top_video_title: Optional[str] = None
+    top_video_views: Optional[int] = None
+    top_channels: List[AnalysisChannelSummary] = []
+    top_videos: List[AnalysisTopVideoItem] = []
+    title_patterns: AnalysisTitlePatternResponse
+    recommendations: List[str] = []

@@ -8,7 +8,7 @@ const navItems = [
   { href: "/videos", label: "影片資料庫" },
   { href: "/jobs", label: "任務中心" },
   { href: "/settings", label: "設定" },
-  { href: "/analysis", label: "AI 分析", disabled: true },
+  { href: "/analysis", label: "AI 分析" },
 ];
 
 export default function Sidebar() {
@@ -57,7 +57,7 @@ export default function Sidebar() {
         })}
       </nav>
       <div className="px-5 py-4 border-t border-slate-700 text-xs text-slate-500">
-        v0.1.0
+        v2.0
       </div>
     </aside>
   );

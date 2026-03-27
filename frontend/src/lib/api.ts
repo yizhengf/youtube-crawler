@@ -1,4 +1,5 @@
 import {
+  AnalysisOverview,
   AnalysisStatus,
   Channel,
   Job,
@@ -172,4 +173,9 @@ export async function createAiVideoJobFromVideo(id: number): Promise<Job> {
 // Analysis placeholder
 export async function getAnalysisStatus(): Promise<AnalysisStatus> {
   return request<AnalysisStatus>("/api/analysis/status");
+}
+
+export async function getAnalysisOverview(channelId?: string): Promise<AnalysisOverview> {
+  const qs = channelId ? `?channel_id=${encodeURIComponent(channelId)}` : "";
+  return request<AnalysisOverview>(`/api/analysis/overview${qs}`);
 }
